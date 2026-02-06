@@ -1,11 +1,38 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface LoginProps {
   onLogin: () => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email) {
+      setError('Please enter your email');
+      return;
+    }
+
+    if (!email.endsWith('@kkumail.com')) {
+      setError('Only @kkumail.com emails are allowed');
+      return;
+    }
+
+    if (!password) {
+      setError('Please enter your password');
+      return;
+    }
+
+    onLogin();
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 min-h-screen bg-background-light dark:bg-background-dark">
       <div className="w-full max-w-[480px] bg-white dark:bg-[#1a2c1a] rounded-xl shadow-lg border border-[#e7f3e7] dark:border-[#2a422a] p-8 sm:p-10 flex flex-col gap-6 relative overflow-hidden">
@@ -17,11 +44,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <h1 className="text-3xl font-bold tracking-tight text-[#0e1b0e] dark:text-white text-center font-display">เข้าสู่ระบบ</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Welcome back, student!</p>
         </div>
-        <form className="flex flex-col gap-5 w-full" onSubmit={(e) => { e.preventDefault(); onLogin(); }}>
+        <form className="flex flex-col gap-5 w-full" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-3 text-red-800 dark:text-red-200 text-sm">
+              {error}
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="text-[#0e1b0e] dark:text-gray-200 text-sm font-bold leading-normal">Email</label>
             <div className="relative">
-              <input className="form-input w-full rounded-lg text-[#0e1b0e] dark:text-white focus:ring-2 focus:ring-primary/50 border border-[#d0e7d0] dark:border-[#3a523a] bg-[#f8fcf8] dark:bg-[#112111] h-12 px-4" placeholder="name@example.com" type="email" />
+              <input 
+                className="form-input w-full rounded-lg text-[#0e1b0e] dark:text-white focus:ring-2 focus:ring-primary/50 border border-[#d0e7d0] dark:border-[#3a523a] bg-[#f8fcf8] dark:bg-[#112111] h-12 px-4" 
+                placeholder="name@kkumail.com" 
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                 <span className="material-symbols-outlined text-[20px]">mail</span>
               </div>
@@ -30,13 +68,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="flex flex-col gap-1.5">
             <label className="text-[#0e1b0e] dark:text-gray-200 text-sm font-bold leading-normal">Password</label>
             <div className="relative">
-              <input className="form-input w-full rounded-lg text-[#0e1b0e] dark:text-white focus:ring-2 focus:ring-primary/50 border border-[#d0e7d0] dark:border-[#3a523a] bg-[#f8fcf8] dark:bg-[#112111] h-12 px-4" placeholder="Enter your password" type="password" />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400">
-                <span className="material-symbols-outlined text-[20px]">visibility_off</span>
+              <input 
+                className="form-input w-full rounded-lg text-[#0e1b0e] dark:text-white focus:ring-2 focus:ring-primary/50 border border-[#d0e7d0] dark:border-[#3a523a] bg-[#f8fcf8] dark:bg-[#112111] h-12 px-4" 
+                placeholder="Enter your password" 
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <div 
+                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? 'visibility' : 'visibility_off'}
+                </span>
               </div>
             </div>
           </div>
-          <button className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-primary hover:bg-[#16cc16] transition-colors text-[#0e1b0e] text-base font-bold shadow-sm mt-2">
+          <button 
+            type="submit"
+            className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-primary hover:bg-[#16cc16] transition-colors text-[#0e1b0e] text-base font-bold shadow-sm mt-2">
             Log in
           </button>
         </form>
