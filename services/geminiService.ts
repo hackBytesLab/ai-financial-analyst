@@ -13,6 +13,14 @@ function getClient() {
 const FALLBACK_INSIGHT =
   "AI Insight: ลองตรวจสอบค่าใช้จ่ายในหมวดอาหารที่ดูเหมือนจะสูงขึ้นในสัปดาห์นี้";
 const FALLBACK_CHAT = "ขออภัยครับ เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI โปรดลองอีกครั้งภายหลัง";
+const FALLBACK_ANALYSIS = `📊 สรุปสุขภาพทางการเงิน
+
+จากข้อมูลที่มี คุณมีการจัดการรายรับ-รายจ่ายในระดับที่พอใช้ได้ แต่ยังมีจุดที่สามารถปรับปรุงได้
+
+💡 คำแนะนำ:
+• พยายามเพิ่มอัตราการออมให้ถึง 20% ของรายรับ
+• ติดตามค่าใช้จ่ายหมวดที่สูงที่สุดอย่างสม่ำเสมอ
+• บันทึกรายรับ-รายจ่ายทุกวันเพื่อข้อมูลที่แม่นยำขึ้น`;
 
 function normalizeApiText(value: unknown): string | null {
   if (value == null) return null;
@@ -44,6 +52,40 @@ export const getFinancialInsight = async (summary: string): Promise<string> => {
   }
 };
 
+export const getFinancialAnalysis = async (detailsJson: string): Promise<string> => {
+  try {
+    const ai = getClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `คุณเป็น AI Financial Analyst สำหรับนักศึกษา จงวิเคราะห์ข้อมูลการเงินต่อไปนี้อย่างละเอียด:
+
+${detailsJson}
+
+กรุณาตอบเป็นภาษาไทย โดยครอบคลุมหัวข้อเหล่านี้:
+1. 📊 สรุปภาพรวมสุขภาพทางการเงิน (1-2 ประโยค)
+2. ✅ จุดแข็ง — สิ่งที่ทำได้ดี (1-2 ข้อ)
+3. ⚠️ จุดที่ควรปรับปรุง (1-2 ข้อ)
+4. 💡 คำแนะนำเชิงปฏิบัติ (2-3 ข้อสั้นๆ ที่นักศึกษาทำได้จริง)
+
+ตอบให้กระชับ ไม่เกิน 200 คำ ใช้โทนที่เป็นมิตรและให้กำลังใจ`,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 500,
+      },
+    });
+    const text = normalizeApiText(response?.text);
+    return text ?? FALLBACK_ANALYSIS;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("GEMINI_API_KEY")) throw error;
+      console.error("Analysis Error:", error.message);
+    } else {
+      console.error("Analysis Error:", error);
+    }
+    return FALLBACK_ANALYSIS;
+  }
+};
+
 export type { ChatHistoryTurn } from "../types";
 
 export const chatWithAI = async (
@@ -57,7 +99,8 @@ export const chatWithAI = async (
       history: history.length > 0 ? history : undefined,
       config: {
         systemInstruction:
-          "You are a helpful AI Financial Analyst specialized in helping students manage their money. You speak Thai primarily. Be encouraging, precise, and professional.",
+          "You are a helpful AI Financial Analyst specialized in helping students manage their money. You speak Thai primarily. Be encouraging, precise, and professional. Keep your responses short and concise — ideally 2-3 sentences. Avoid long paragraphs or bullet points unless the user explicitly asks for detailed explanation.",
+        maxOutputTokens: 200,
       },
     });
 
