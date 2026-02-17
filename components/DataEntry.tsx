@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Transaction, TransactionType } from '../types';
+import { TransactionInput, TransactionType } from '../types';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, INVEST_TYPES } from '../constants';
 
 interface DataEntryProps {
-  onAdd: (t: Transaction) => void;
+  onAdd: (t: TransactionInput) => Promise<void>;
 }
 
 const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
@@ -29,20 +29,24 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
     note: ''
   });
 
-  const handleSubmit = (type: TransactionType, data: any) => {
+  const handleSubmit = async (type: TransactionType, data: any) => {
     if (!data.amount || !data.category) {
       alert("Please fill in amount and category");
       return;
     }
 
-    onAdd({
-      id: Math.random().toString(36).substr(2, 9),
-      type,
-      amount: parseFloat(data.amount),
-      category: data.category,
-      date: data.date,
-      note: data.note
-    });
+    try {
+      await onAdd({
+        type,
+        amount: parseFloat(data.amount),
+        category: data.category,
+        date: data.date,
+        note: data.note
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to save data");
+      return;
+    }
 
     // Reset only the specific form
     const emptyData = {
@@ -115,10 +119,10 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
 
         <div className="sticky bottom-4 z-40 mt-4 flex justify-center w-full">
           <button 
-            onClick={() => {
-              if (incomeData.amount && incomeData.category) handleSubmit('income', incomeData);
-              if (expenseData.amount && expenseData.category) handleSubmit('expense', expenseData);
-              if (investData.amount && investData.category) handleSubmit('invest', investData);
+            onClick={async () => {
+              if (incomeData.amount && incomeData.category) await handleSubmit('income', incomeData);
+              if (expenseData.amount && expenseData.category) await handleSubmit('expense', expenseData);
+              if (investData.amount && investData.category) await handleSubmit('invest', investData);
             }}
             className="bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white rounded-lg h-12 min-w-[280px] px-8 text-base font-bold flex items-center justify-center gap-3 transition-all"
           >

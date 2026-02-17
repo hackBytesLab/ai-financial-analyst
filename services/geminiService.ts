@@ -1,11 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import type { ChatHistoryTurn } from "../types";
+import { getGeminiKey } from "./apiKeyStore";
 
-const apiKey = process.env.GEMINI_API_KEY ?? process.env.API_KEY ?? "";
+const MISSING_KEY_ERROR = "GEMINI_API_KEY_MISSING";
 
 function getClient() {
+  const apiKey = getGeminiKey();
   if (!apiKey || apiKey === "PLACEHOLDER_API_KEY") {
-    throw new Error("GEMINI_API_KEY is not set or invalid. Set it in .env.local.");
+    throw new Error(MISSING_KEY_ERROR);
   }
   return new GoogleGenAI({ apiKey });
 }
@@ -43,7 +45,7 @@ export const getFinancialInsight = async (summary: string): Promise<string> => {
     return text ?? FALLBACK_INSIGHT;
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes("GEMINI_API_KEY")) throw error;
+      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
       console.error("Gemini Error:", error.message);
     } else {
       console.error("Gemini Error:", error);
@@ -77,7 +79,7 @@ ${detailsJson}
     return text ?? FALLBACK_ANALYSIS;
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes("GEMINI_API_KEY")) throw error;
+      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
       console.error("Analysis Error:", error.message);
     } else {
       console.error("Analysis Error:", error);
@@ -109,7 +111,7 @@ export const chatWithAI = async (
     return text ?? FALLBACK_CHAT;
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes("GEMINI_API_KEY")) throw error;
+      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
       console.error("Chat Error:", error.message);
     } else {
       console.error("Chat Error:", error);

@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { Transaction } from '../types';
-import { CATEGORY_COLORS, CHART_COLORS } from '../constants';
-import { getFinancialAnalysis } from '../services/geminiService';
+import { Transaction } from './types';
+import { CATEGORY_COLORS, CHART_COLORS } from './constants';
+import { getFinancialAnalysis } from './services/geminiService';
 
 interface AnalysisProps {
   transactions: Transaction[];
@@ -21,6 +21,7 @@ interface HealthMetric {
 const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
   const [aiAnalysis, setAiAnalysis] = useState<string>("กำลังวิเคราะห์ข้อมูลการเงินของคุณ...");
   const [isLoadingAI, setIsLoadingAI] = useState(true);
+  const [isKeyMissing, setIsKeyMissing] = useState(false);
 
   // Calculate all financial stats
   const stats = useMemo(() => {
@@ -154,9 +155,20 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
         metrics: healthMetrics.map(m => `${m.label}: ${m.score}/${m.maxScore}`).join(', '),
       };
       const summary = JSON.stringify(details);
-      const result = await getFinancialAnalysis(summary);
-      setAiAnalysis(result);
-      setIsLoadingAI(false);
+      try {
+        const result = await getFinancialAnalysis(summary);
+        setIsKeyMissing(false);
+        setAiAnalysis(result);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("GEMINI_API_KEY_MISSING")) {
+          setIsKeyMissing(true);
+          setAiAnalysis("กรุณาตั้งค่า Gemini API Key เพื่อใช้งานการวิเคราะห์เชิงลึก");
+        } else {
+          setAiAnalysis("ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้");
+        }
+      } finally {
+        setIsLoadingAI(false);
+      }
     };
     fetchAnalysis();
   }, [stats, totalScore, topExpenseCategory, expenseBreakdown.length, healthMetrics]);
@@ -342,6 +354,13 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
                     {aiAnalysis}
                   </div>
                 </div>
+                {isKeyMissing && (
+                  <div className="mt-3">
+                    <Link to="/settings" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
+                      ไปที่หน้าตั้งค่า API Key
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
