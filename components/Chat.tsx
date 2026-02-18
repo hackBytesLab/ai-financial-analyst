@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { chatWithAI } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
@@ -9,6 +10,7 @@ const Chat: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,17 +26,37 @@ const Chat: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setApiError('');
 
     const history = [...messages, userMessage].map(m => ({ role: m.role, parts: [{ text: m.text }] }));
-    const response = await chatWithAI(input, history);
-
-    setMessages(prev => [...prev, { role: 'model', text: response || 'No response', timestamp: new Date() }]);
-    setIsLoading(false);
+    try {
+      const response = await chatWithAI(input, history);
+      setMessages(prev => [...prev, { role: 'model', text: response || 'No response', timestamp: new Date() }]);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("GEMINI_API_KEY_MISSING")) {
+        setApiError('กรุณาตั้งค่า Gemini API Key ก่อนใช้งาน AI Chat');
+      } else {
+        setApiError('ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex-1 flex flex-col relative w-full max-w-5xl mx-auto h-[calc(100vh-80px)] overflow-hidden bg-white dark:bg-black">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-10 py-6 space-y-8 scrollbar-hide pb-32">
+        {apiError && (
+          <div className="rounded-lg border border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950 p-4 text-sm text-yellow-800 dark:text-yellow-200">
+            <div className="font-semibold mb-1">ต้องตั้งค่า API Key</div>
+            <div className="flex items-center gap-2">
+              <span>{apiError}</span>
+              <Link to="/settings" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
+                ไปตั้งค่า
+              </Link>
+            </div>
+          </div>
+        )}
         <div className="flex justify-center my-4">
           <span className="text-xs font-medium text-gray-600 dark:text-neutral-500 bg-gray-100 dark:bg-neutral-900 px-3 py-1 rounded-full">
             วันนี้, {new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.

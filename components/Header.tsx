@@ -6,9 +6,11 @@ import { Theme } from '../types';
 interface HeaderProps {
   theme: Theme;
   onToggleTheme: () => void;
+  onLogout: () => void;
+  userEmail: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEmail }) => {
   const location = useLocation();
 
   const navLinks = [
@@ -16,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
     { name: 'บันทึกข้อมูล', path: '/entry' },
     { name: 'รายงาน', path: '/reports' },
     { name: 'AI Chat', path: '/chat', icon: 'chat_bubble' },
+    { name: 'API Key', path: '/settings', icon: 'key' },
   ];
 
   return (
@@ -54,6 +57,17 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
             onClick={onToggleTheme}
           >
             <span className="material-symbols-outlined">{theme === Theme.LIGHT ? 'dark_mode' : 'light_mode'}</span>
+          </button>
+          <div className="hidden md:flex items-center gap-2 text-xs text-gray-600 dark:text-neutral-400">
+            <span className="material-symbols-outlined text-[18px]">person</span>
+            <span>{userEmail}</span>
+          </div>
+          <button
+            onClick={onLogout}
+            className="size-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-white hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
+            title="Log out"
+          >
+            <span className="material-symbols-outlined">logout</span>
           </button>
           <div className="size-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800 overflow-hidden border border-white dark:border-white/20 ml-2">
             <img 

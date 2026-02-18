@@ -1,17 +1,21 @@
 
 import React, { useState } from 'react';
+import { api } from '../services/api';
+import { setAuthToken } from '../services/authStore';
 
 interface LoginProps {
   onLogin: () => void;
+  onSwitchToRegister: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -20,17 +24,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       return;
     }
 
-    if (!email.endsWith('@kkumail.com')) {
-      setError('Only @kkumail.com emails are allowed');
-      return;
-    }
-
     if (!password) {
       setError('Please enter your password');
       return;
     }
 
-    onLogin();
+    try {
+      setIsLoading(true);
+      const result = await api.login(email, password);
+      setAuthToken(result.token);
+      onLogin();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -86,8 +94,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
           <button 
             type="submit"
-            className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-colors text-white text-base font-bold mt-2">
-            Log in
+            disabled={isLoading}
+            className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-colors text-white text-base font-bold mt-2 disabled:opacity-60">
+            {isLoading ? 'Signing in...' : 'Log in'}
           </button>
         </form>
         <div className="relative flex items-center py-1">
@@ -108,7 +117,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
         <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-gray-200 dark:border-neutral-800">
           <a className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" href="#">ลืมรหัสผ่าน?</a>
-          <a className="text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors" href="#">ไม่มีบัญชี? ลงทะเบียน</a>
+          <button
+            onClick={onSwitchToRegister}
+            className="text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+          >
+            ไม่มีบัญชี? ลงทะเบียน
+          </button>
         </div>
       </div>
     </div>

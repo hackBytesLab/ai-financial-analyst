@@ -11,6 +11,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const [aiInsight, setAiInsight] = useState<string>("กำลังประมวลผลคำแนะนำจาก AI...");
+  const [isKeyMissing, setIsKeyMissing] = useState(false);
 
   const stats = useMemo(() => {
     const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -62,8 +63,18 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   useEffect(() => {
     const fetchInsight = async () => {
       const summary = `Income: ฿${stats.income}, Expenses: ฿${stats.expenses}, Net: ฿${stats.net}, Savings: ${stats.savingsRate}%`;
-      const result = await getFinancialInsight(summary);
-      setAiInsight(result || "พร้อมให้คำปรึกษาทางการเงินกับคุณเสมอ");
+      try {
+        const result = await getFinancialInsight(summary);
+        setIsKeyMissing(false);
+        setAiInsight(result || "พร้อมให้คำปรึกษาทางการเงินกับคุณเสมอ");
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("GEMINI_API_KEY_MISSING")) {
+          setIsKeyMissing(true);
+          setAiInsight("กรุณาตั้งค่า Gemini API Key เพื่อใช้คำแนะนำจาก AI");
+          return;
+        }
+        setAiInsight("พร้อมให้คำปรึกษาทางการเงินกับคุณเสมอ");
+      }
     };
     fetchInsight();
   }, [stats]);
@@ -216,6 +227,13 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                     <span className="font-semibold text-emerald-700 dark:text-emerald-400">AI Analyst:</span> {aiInsight}
                   </p>
                 </div>
+                {isKeyMissing && (
+                  <div className="mt-2">
+                    <Link to="/settings" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
+                      ไปที่หน้าตั้งค่า API Key
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
             <Link to="/analysis" className="z-10 group flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 dark:bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-all w-full md:w-auto">

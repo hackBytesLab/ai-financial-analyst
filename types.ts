@@ -10,6 +10,19 @@ export interface Transaction {
   note: string;
 }
 
+export interface TransactionInput {
+  type: TransactionType;
+  amount: number;
+  category: string;
+  date: string;
+  note: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+}
+
 export interface ChatMessage {
   role: "user" | "model";
   text: string;
