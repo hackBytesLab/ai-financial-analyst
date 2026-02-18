@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
@@ -6,6 +5,7 @@ import DataEntry from './components/DataEntry';
 import Chat from './components/Chat';
 import Login from './components/Login';
 import Header from './components/Header';
+import Analysis from './components/Analysis';
 import { Transaction, Theme } from './types';
 import { INITIAL_TRANSACTIONS } from './constants';
 
@@ -39,14 +39,15 @@ const App: React.FC = () => {
 
   return (
     <HashRouter>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-black">
         <Header theme={theme} onToggleTheme={toggleTheme} />
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<Dashboard transactions={transactions} />} />
             <Route path="/entry" element={<DataEntry onAdd={addTransaction} />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/reports" element={<div className="p-10 text-center">Reports Page - Coming Soon</div>} />
+            <Route path="/analysis" element={<Analysis transactions={transactions} />} />
+            <Route path="/reports" element={<div className="p-10 text-center text-gray-900 dark:text-white">Reports Page - Coming Soon</div>} />
           </Routes>
         </main>
       </div>

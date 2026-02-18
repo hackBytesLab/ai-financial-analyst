@@ -19,13 +19,13 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-sm">
       <div className="px-6 lg:px-10 py-4 max-w-[1440px] mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary-dark dark:text-primary">
+          <div className="size-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
             <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>analytics</span>
           </div>
-          <h2 className="text-lg font-bold tracking-tight">AI Financial Analyst</h2>
+          <h2 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">AI Financial Analyst</h2>
         </Link>
         
         <nav className="hidden md:flex items-center gap-8">
@@ -37,8 +37,8 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                 to={link.path}
                 className={`text-sm font-medium transition-colors flex items-center gap-2 relative ${
                   isActive 
-                    ? 'text-primary-dark dark:text-primary font-bold after:content-[""] after:absolute after:-bottom-5 after:left-0 after:w-full after:h-0.5 after:bg-primary' 
-                    : 'text-text-main-light/70 dark:text-text-main-dark/70 hover:text-primary-dark dark:hover:text-primary'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold after:content-[""] after:absolute after:-bottom-5 after:left-0 after:w-full after:h-0.5 after:bg-emerald-600 dark:after:bg-emerald-400' 
+                    : 'text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400'
                 }`}
               >
                 {link.icon && <span className="material-symbols-outlined text-[20px]">{link.icon}</span>}
@@ -50,12 +50,12 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
 
         <div className="flex items-center gap-4">
           <button 
-            className="size-9 flex items-center justify-center rounded-lg bg-secondary dark:bg-white/10 text-text-main-light dark:text-white hover:bg-primary/20 transition-all"
+            className="size-9 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-white hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-all"
             onClick={onToggleTheme}
           >
             <span className="material-symbols-outlined">{theme === Theme.LIGHT ? 'dark_mode' : 'light_mode'}</span>
           </button>
-          <div className="size-9 rounded-full bg-gradient-to-br from-primary to-green-300 dark:to-green-700 overflow-hidden border border-white dark:border-white/20 ml-2">
+          <div className="size-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800 overflow-hidden border border-white dark:border-white/20 ml-2">
             <img 
               alt="User" 
               src="https://picsum.photos/100/100?random=1" 

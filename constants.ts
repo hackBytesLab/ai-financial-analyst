@@ -1,4 +1,3 @@
-
 import { Transaction } from './types';
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -14,4 +13,17 @@ export const INCOME_CATEGORIES = ['Salary', 'Allowance', 'Freelance', 'Bonus', '
 export const EXPENSE_CATEGORIES = ['Food', 'Transport', 'Shopping', 'Bills', 'Education', 'Ent.', 'Rent'];
 export const INVEST_TYPES = ['Mutual Fund', 'Stocks', 'Crypto', 'Savings'];
 
-export const CHART_COLORS = ['#19e619', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7'];
+// Distinct colors per expense category
+export const CATEGORY_COLORS: Record<string, string> = {
+  Food: '#f97316',       // orange
+  Transport: '#3b82f6',  // blue
+  Shopping: '#a855f7',   // purple
+  Bills: '#eab308',      // yellow
+  Education: '#06b6d4',  // cyan
+  'Ent.': '#ec4899',     // pink
+  Rent: '#ef4444',       // red
+  Utilities: '#14b8a6',  // teal
+};
+
+// Fallback ordered colors for any unknown categories
+export const CHART_COLORS = ['#f97316', '#3b82f6', '#a855f7', '#eab308', '#06b6d4', '#ec4899', '#ef4444', '#14b8a6'];
