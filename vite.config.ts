@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      allowedHosts: ['.trycloudflare.com', 'localhost', '10.53.33.100', '172.18.0.1'],
     },
     plugins: [react()],
     resolve: {
