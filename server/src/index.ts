@@ -10,22 +10,42 @@ const app = express();
 const prisma = new PrismaClient();
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('Missing JWT_SECRET environment variable');
+}
 const CORS_ORIGINS = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const DEFAULT_CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+const ALLOWED_CORS_ORIGINS = CORS_ORIGINS.length > 0 ? CORS_ORIGINS : DEFAULT_CORS_ORIGINS;
 
 app.use(
   cors({
-    // If CORS_ORIGIN is not set, reflect the caller origin to simplify LAN/dev usage.
-    origin: CORS_ORIGINS.length > 0 ? CORS_ORIGINS : true,
+    origin: (origin, callback) => {
+      if (!origin || ALLOWED_CORS_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   }),
 );
 app.use(express.json());
 
 type JwtPayload = { userId: string };
+
+const isValidCalendarDate = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  return date.toISOString().slice(0, 10) === value;
+};
 
 const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -51,7 +71,7 @@ const transactionSchema = z.object({
   type: z.enum(['income', 'expense', 'invest']),
   amount: z.number().positive(),
   category: z.string().min(1),
-  date: z.string().min(1),
+  date: z.string().refine(isValidCalendarDate, 'Date must be a valid calendar date in YYYY-MM-DD'),
   note: z.string().optional().nullable(),
 });
 
@@ -142,13 +162,14 @@ app.post('/api/transactions', requireAuth, async (req, res) => {
   }
   const userId = (req as any).userId as string;
   const data = parsed.data;
+  const transactionDate = new Date(`${data.date}T00:00:00.000Z`);
   const created = await prisma.transaction.create({
     data: {
       userId,
       type: data.type,
       amount: data.amount,
       category: data.category,
-      date: new Date(data.date),
+      date: transactionDate,
       note: data.note || '',
     },
   });
