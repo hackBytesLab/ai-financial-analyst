@@ -11,9 +11,18 @@ const prisma = new PrismaClient();
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    // If CORS_ORIGIN is not set, reflect the caller origin to simplify LAN/dev usage.
+    origin: CORS_ORIGINS.length > 0 ? CORS_ORIGINS : true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 type JwtPayload = { userId: string };

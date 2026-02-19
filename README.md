@@ -43,6 +43,10 @@ It is not embedded in the build or stored on any server.
 
 API default URL: `http://localhost:4000`
 
+For frontend opened via LAN IP (for example `http://10.53.33.100:3000`), set
+`CORS_ORIGIN` in `server/.env` to allowed origins (comma-separated), for example:
+`CORS_ORIGIN="http://localhost:3000,http://10.53.33.100:3000"`
+
 ### Frontend API URL
 
 If you need a different API base URL, set:

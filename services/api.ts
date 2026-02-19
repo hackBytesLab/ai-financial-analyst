@@ -1,7 +1,8 @@
 import { Transaction } from '../types';
 import { getAuthToken } from './authStore';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const defaultApiBase = `${window.location.protocol}//${window.location.hostname}:4000`;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || defaultApiBase;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAuthToken();
