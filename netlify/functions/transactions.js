@@ -1,5 +1,6 @@
 import { createTransactionForUser, listTransactionsByUser } from './_lib/store.js';
 import { getAuthedUser, methodNotAllowed, unauthorized } from './_lib/auth.js';
+import { connectLambda } from '@netlify/blobs';
 
 function badRequest(message) {
   return {
@@ -28,6 +29,8 @@ function validatePayload(payload) {
 
 export const handler = async (event, context) => {
   try {
+    connectLambda(event);
+
     const authed = await getAuthedUser(event, context);
     if (!authed) {
       return unauthorized();
