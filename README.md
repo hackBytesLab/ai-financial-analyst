@@ -2,186 +2,105 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# วิธีรันและดีพลอยแอป AI Studio
+# AI Financial Analyst (Netlify-only)
 
-เอกสารนี้รวมทุกอย่างที่ต้องใช้สำหรับรันแอปบนเครื่องของคุณ (local)
+โปรเจกต์นี้ย้ายเป็น **Netlify-only architecture** แล้ว:
+- Frontend: Vite + React
+- Auth: Netlify Identity
+- API: Netlify Functions
+- Data store: Netlify Blobs
 
-ดูแอปของคุณใน AI Studio: https://ai.studio/apps/temp/1
+## Quickstart
 
-## เปิดเว็บแบบ Step-by-step (ทำตามนี้ได้เลย)
-
-### แบบที่ 1: เปิดใช้ในเครื่องตัวเอง (Local)
-
-1. เปิด Terminal 1 แล้วรันฐานข้อมูล
-   ```bash
-   docker compose up -d
-   ```
-2. เปิด Terminal 2 แล้วรัน Backend
-   ```bash
-   cd server
-   cp .env.example .env
-   npm install
-   npx prisma migrate dev
-   npm run dev
-   ```
-3. เปิด Terminal 3 แล้วรัน Frontend
-   ```bash
-   # รันจากโฟลเดอร์หลักของโปรเจกต์
-   cp .env.example .env
-   npm install
-   npm run dev
-   ```
-4. เปิดเว็บ
-   - หน้าเว็บ: `http://localhost:3000`
-   - API health check: `http://localhost:4000/api/health`
-
-### แบบที่ 2: เปิดให้คนอื่นเข้าได้ผ่าน Cloudflare Tunnel
-
-1. ทำขั้นตอน Local ให้ครบก่อน (แบบที่ 1)
-2. เปิด Terminal 4 แล้วสร้าง Frontend tunnel
-   ```bash
-   cloudflared tunnel --url http://localhost:3000
-   ```
-3. เปิด Terminal 5 แล้วสร้าง Backend tunnel
-   ```bash
-   cloudflared tunnel --url http://localhost:4000
-   ```
-4. เอา URL ที่ได้จาก Backend tunnel ไปใส่ไฟล์ `.env` (root)
-   ```bash
-   VITE_API_BASE_URL="https://<backend-tunnel>.trycloudflare.com"
-   ```
-5. เอา URL ที่ได้จาก Frontend tunnel ไปใส่ไฟล์ `server/.env`
-   ```bash
-   CORS_ORIGIN="http://localhost:3000,https://<frontend-tunnel>.trycloudflare.com"
-   ```
-6. รีสตาร์ท Backend และ Frontend (กด `Ctrl+C` แล้วรัน `npm run dev` ใหม่ทั้งสองฝั่ง)
-7. เปิดเว็บด้วย Frontend tunnel URL ที่ได้จากข้อ 2
-
-## รันบนเครื่อง (Local)
-
-**สิ่งที่ต้องมี:** Node.js
-
-
-1. ติดตั้ง dependencies:
-   ```bash
-   npm install
-   ```
-2. รันแอป:
-   ```bash
-   npm run dev
-   ```
-3. เปิดแอปและตั้งค่า Gemini API key:
-   `/#/settings`
-
-## Gemini API Key
-
-แอปนี้ถูกดีพลอยแบบ public static site ดังนั้น API key จะถูกเก็บไว้เฉพาะในเบราว์เซอร์ของผู้ใช้
-จะไม่ถูกฝังในไฟล์ build และไม่ถูกเก็บบนเซิร์ฟเวอร์
-
-## Backend (เว็บไซต์แบบ Dynamic)
-
-**สิ่งที่ต้องมี:** Docker (สำหรับ Postgres), Node.js
-
-### เริ่มระบบ Full Stack (แนะนำ)
-
-ใช้ทั้งหมด 3 เทอร์มินัล
-
-1. เริ่ม Postgres:
-   ```bash
-   docker compose up -d
-   ```
-2. เริ่ม backend API:
-   ```bash
-   cd server
-   cp .env.example .env
-   npm install
-   npx prisma migrate dev
-   npm run dev
-   ```
-3. เริ่ม frontend:
-   ```bash
-   # รันจากโฟลเดอร์หลักของโปรเจกต์
-   npm install
-   npm run dev
-   ```
-
-URL Frontend: `http://localhost:3000`  
-URL Backend: `http://localhost:4000`  
-Health Check Backend: `http://localhost:4000/api/health`
-
-### หยุดการทำงานของบริการ
-
-1. หยุด frontend/backend: กด `Ctrl+C` ในแต่ละเทอร์มินัลที่รันอยู่
-2. หยุด Postgres:
-   ```bash
-   docker compose down
-   ```
-
-ถ้าเปิด frontend ผ่าน LAN IP (เช่น `http://10.53.33.100:3000`) ให้ตั้งค่า
-`CORS_ORIGIN` ใน `server/.env` เป็นโดเมนที่อนุญาต (คั่นด้วย comma) ตัวอย่าง:
-`CORS_ORIGIN="http://localhost:3000,http://10.53.33.100:3000"`
-
-### URL API ของ Frontend
-
-ถ้าต้องการใช้ API base URL อื่น ให้ตั้งค่า:
-`VITE_API_BASE_URL` ในไฟล์ `.env` ที่ root (คัดลอกจาก `.env.example`) ตัวอย่าง:
+### 1) ติดตั้ง dependencies
 
 ```bash
-VITE_API_BASE_URL="http://localhost:4000"
+npm install
 ```
 
-## Cloudflare Tunnel (เปิดลิงก์สาธารณะสำหรับแอปที่รันบนเครื่อง)
+### 2) ตั้งค่า env (optional)
 
-ใช้ทั้งหมด 4 เทอร์มินัล
+สร้าง `.env` จากตัวอย่าง:
 
-1. เริ่ม Postgres:
-   ```bash
-   docker compose up -d
-   ```
-2. เริ่ม backend API:
-   ```bash
-   cd server
-   cp .env.example .env
-   npm install
-   npx prisma migrate dev
-   npm run dev
-   ```
-3. เริ่ม frontend:
-   ```bash
-   # รันจากโฟลเดอร์หลักของโปรเจกต์
-   cp .env.example .env
-   npm install
-   npm run dev -- --host 0.0.0.0 --port 3000
-   ```
-4. เปิด tunnels:
-   ```bash
-   # tunnel สำหรับ frontend
-   cloudflared tunnel --url http://localhost:3000
+```bash
+cp .env.example .env
+```
 
-   # tunnel สำหรับ backend (เปิดในอีกเทอร์มินัล)
-   cloudflared tunnel --url http://localhost:4000
-   ```
+ค่าที่รองรับ:
 
-จากนั้นตั้งค่า env:
+```env
+# ใส่เมื่อจะให้ frontend วิ่งไปโดเมนอื่น (เช่น production)
+VITE_NETLIFY_SITE_URL=""
 
-- `.env` ที่ root
-  ```bash
-  VITE_API_BASE_URL="https://<backend-tunnel>.trycloudflare.com"
-  ```
-- `server/.env`
-  ```bash
-  CORS_ORIGIN="http://localhost:3000,https://<frontend-tunnel>.trycloudflare.com"
-  ```
+# โดยปกติไม่ต้องใส่ ใช้ค่า default = <site>/.netlify/identity
+VITE_NETLIFY_IDENTITY_URL=""
+```
 
-หลังแก้ค่า `.env` แล้ว ให้รีสตาร์ททั้ง frontend และ backend
+### 3) รัน local frontend
 
-## ดีพลอยไป GitHub Pages (Project Site)
+```bash
+npm run dev
+```
 
-1. Push โค้ดขึ้น branch `main`
-2. ไปที่ settings ของ repo บน GitHub > `Pages` แล้วตั้ง `Source` เป็น `GitHub Actions`
-3. เว็บไซต์จะพร้อมใช้งานที่:
-   `https://<owner>.github.io/ai-financial-analyst/`
+## Deploy to Netlify
 
-หมายเหตุ:
-- `vite.config.ts` ตั้งค่า `base: '/ai-financial-analyst/'` สำหรับ production
-- Router ใช้ `HashRouter` เพื่อป้องกันปัญหา refresh แล้วเจอ 404 บน static hosting
+### 1) Production deploy
+
+```bash
+npm run netlify:deploy
+```
+
+### 2) ตั้งค่า Netlify Identity (ใน Dashboard)
+
+ไปที่ Site settings -> Identity
+1. เปิดใช้งาน Identity
+2. Registration แนะนำให้เริ่มที่ `Open` เพื่อทดสอบ
+3. หลังทดสอบค่อยปรับ policy ตามต้องการ
+4. ช่วง debug แนะนำปิดออปชันยืนยันอีเมลก่อน login
+
+## Auth Troubleshooting
+
+- สมัครแล้วไม่เข้า dashboard:
+  - ตรวจว่า Identity เปิดใช้งานแล้ว และ Registration เป็น `Open`
+  - ถ้าเปิด email confirmation จะต้องยืนยันอีเมลก่อน login
+- Login ไม่สำเร็จ:
+  - ตรวจข้อความ error ใต้ฟอร์ม (เช่น `Invalid login credentials`)
+  - เปิด DevTools Console ดู log prefix `[auth]`, `[api]`, `[app]` ในโหมด dev
+
+## API Endpoints (Netlify Functions)
+
+- `GET /.netlify/functions/me`
+- `GET /.netlify/functions/transactions`
+- `POST /.netlify/functions/transactions`
+- `POST /.netlify/functions/logout`
+
+## Data Model (Blobs)
+
+เก็บข้อมูลต่อผู้ใช้ด้วย key:
+- `transactions:{userId}` -> array ของ transaction
+
+Transaction shape:
+- `id`
+- `type` (`income` | `expense` | `invest`)
+- `amount`
+- `category`
+- `date`
+- `note`
+
+## Limitations
+
+- Blobs เหมาะกับงาน small-medium ที่ไม่ต้อง join/query ซับซ้อนแบบ relational DB
+- โมดูล `/admin` ถูกปิดชั่วคราวใน Netlify-only mode
+
+## Legacy Mode (Optional)
+
+โหมดเดิม `Express + Postgres + Cloudflare tunnel` ยังอยู่ใน repo:
+- `server/`
+- `docker-compose.yml`
+- `scripts/share.sh`
+
+รันโหมดเดิมด้วย:
+
+```bash
+npm run legacy:share
+```

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { api } from '../services/api';
-import { setAuthToken } from '../services/authStore';
+import { api, normalizeAuthError } from '../services/api';
 
 interface RegisterProps {
   onRegister: () => void;
@@ -34,11 +33,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
 
     try {
       setIsLoading(true);
-      const result = await api.register(email, password);
-      setAuthToken(result.token);
+      await api.register(email, password);
       onRegister();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Register failed');
+      const message = normalizeAuthError(err);
+      if (message === 'Email not confirmed') {
+        setError('สมัครสำเร็จแล้ว แต่ยังต้องยืนยันอีเมลก่อนเข้าสู่ระบบ');
+      } else {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -11,7 +11,7 @@ interface HeaderProps {
   userRole?: string | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEmail }) => {
+const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEmail, userRole }) => {
   const location = useLocation();
 
   const navLinks = [

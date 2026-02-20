@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { api } from '../services/api';
-import { setAuthToken } from '../services/authStore';
+import { api, normalizeAuthError } from '../services/api';
 
 interface LoginProps {
   onLogin: () => void;
@@ -31,11 +30,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
 
     try {
       setIsLoading(true);
-      const result = await api.login(email, password);
-      setAuthToken(result.token);
+      await api.login(email, password);
       onLogin();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(normalizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
