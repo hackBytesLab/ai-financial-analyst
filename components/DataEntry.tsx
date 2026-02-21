@@ -1,229 +1,224 @@
-
-import React, { useState } from 'react';
-import { TransactionInput, TransactionType } from '../types';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, INVEST_TYPES } from '../constants';
+import React, { useMemo, useState } from 'react';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, INVEST_TYPES } from '../constants';
+import { TransactionFormState, TransactionInput, TransactionType, UiFeedback } from '../types';
 
 interface DataEntryProps {
   onAdd: (t: TransactionInput) => Promise<void>;
 }
 
+const EMPTY_FORM = (): TransactionFormState => ({
+  type: 'income',
+  amount: '',
+  category: '',
+  date: new Date().toISOString().split('T')[0],
+  note: '',
+});
+
+const QUICK_AMOUNTS = [100, 300, 500, 1000, 2000];
+
+const TYPE_META: Record<TransactionType, { title: string; desc: string; color: string; icon: string }> = {
+  income: { title: 'รายรับ', desc: 'บันทึกรายได้ของคุณ', color: 'emerald', icon: 'trending_up' },
+  expense: { title: 'รายจ่าย', desc: 'บันทึกค่าใช้จ่ายประจำวัน', color: 'red', icon: 'trending_down' },
+  invest: { title: 'การลงทุน', desc: 'บันทึกเงินที่นำไปลงทุน', color: 'blue', icon: 'monitoring' },
+};
+
+function isValidDateString(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.toISOString().slice(0, 10) === value;
+}
+
 const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
-  const [incomeData, setIncomeData] = useState({
-    amount: '',
-    category: '',
-    date: new Date().toISOString().split('T')[0],
-    note: ''
-  });
+  const [form, setForm] = useState<TransactionFormState>(EMPTY_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<UiFeedback | null>(null);
 
-  const [expenseData, setExpenseData] = useState({
-    amount: '',
-    category: '',
-    date: new Date().toISOString().split('T')[0],
-    note: ''
-  });
+  const categories = useMemo(() => {
+    if (form.type === 'income') return INCOME_CATEGORIES;
+    if (form.type === 'expense') return EXPENSE_CATEGORIES;
+    return INVEST_TYPES;
+  }, [form.type]);
 
-  const [investData, setInvestData] = useState({
-    amount: '',
-    category: '',
-    date: new Date().toISOString().split('T')[0],
-    note: ''
-  });
+  const typeMeta = TYPE_META[form.type];
 
-  const handleSubmit = async (type: TransactionType, data: any) => {
-    if (!data.amount || !data.category) {
-      alert("Please fill in amount and category");
+  const fieldError = useMemo(() => {
+    const amount = Number(form.amount);
+    if (!form.amount.trim()) return 'กรุณากรอกจำนวนเงิน';
+    if (!Number.isFinite(amount) || amount <= 0) return 'จำนวนเงินต้องมากกว่า 0';
+    if (!form.category.trim()) return 'กรุณาเลือกหมวดหมู่';
+    if (!form.date.trim()) return 'กรุณาเลือกวันที่';
+    if (!isValidDateString(form.date)) return 'รูปแบบวันที่ไม่ถูกต้อง';
+    if (form.note.length > 500) return 'บันทึกช่วยจำยาวเกิน 500 ตัวอักษร';
+    return '';
+  }, [form]);
+
+  const handleTypeChange = (type: TransactionType) => {
+    setForm((prev) => ({ ...prev, type, category: '' }));
+    setFeedback(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedback(null);
+
+    if (fieldError) {
+      setFeedback({ type: 'error', message: fieldError });
       return;
     }
 
     try {
+      setIsSubmitting(true);
       await onAdd({
-        type,
-        amount: parseFloat(data.amount),
-        category: data.category,
-        date: data.date,
-        note: data.note
+        type: form.type,
+        amount: Number(form.amount),
+        category: form.category.trim(),
+        date: form.date,
+        note: form.note.trim(),
       });
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save data");
-      return;
+
+      setFeedback({ type: 'success', message: 'บันทึกรายการสำเร็จแล้ว' });
+      setForm((prev) => ({
+        ...EMPTY_FORM(),
+        type: prev.type,
+      }));
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลได้',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Reset only the specific form
-    const emptyData = {
-      amount: '',
-      category: '',
-      date: new Date().toISOString().split('T')[0],
-      note: ''
-    };
-
-    if (type === 'income') {
-      setIncomeData(emptyData);
-    } else if (type === 'expense') {
-      setExpenseData(emptyData);
-    } else if (type === 'invest') {
-      setInvestData(emptyData);
-    }
-
-    alert("Data saved successfully!");
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">บันทึกข้อมูลการเงิน</h1>
-          <p className="text-gray-600 dark:text-neutral-400 text-sm font-normal">กรอกข้อมูลรายรับ รายจ่าย และการลงทุนเพื่อการวิเคราะห์ที่แม่นยำ</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start">
-          {/* Income Form */}
-          <EntryBox 
-            title="รายรับ" 
-            subTitle="(Income)" 
-            icon="trending_up" 
-            color="green" 
-            btnText="เพิ่มรายรับ"
-            categories={INCOME_CATEGORIES}
-            onSave={() => handleSubmit('income', incomeData)}
-            formData={incomeData}
-            setFormData={setIncomeData}
-          />
-
-          {/* Expense Form */}
-          <EntryBox 
-            title="รายจ่าย" 
-            subTitle="(Expenses)" 
-            icon="trending_down" 
-            color="red" 
-            btnText="เพิ่มรายจ่าย"
-            categories={EXPENSE_CATEGORIES}
-            onSave={() => handleSubmit('expense', expenseData)}
-            formData={expenseData}
-            setFormData={setExpenseData}
-          />
-
-          {/* Investment Form */}
-          <EntryBox 
-            title="การลงทุน" 
-            subTitle="(Invest)" 
-            icon="monitoring" 
-            color="blue" 
-            btnText="บันทึกการลงทุน"
-            categories={INVEST_TYPES}
-            onSave={() => handleSubmit('invest', investData)}
-            formData={investData}
-            setFormData={setInvestData}
-          />
-        </div>
-
-        <div className="sticky bottom-4 z-40 mt-4 flex justify-center w-full">
-          <button 
-            onClick={async () => {
-              if (incomeData.amount && incomeData.category) await handleSubmit('income', incomeData);
-              if (expenseData.amount && expenseData.category) await handleSubmit('expense', expenseData);
-              if (investData.amount && investData.category) await handleSubmit('invest', investData);
-            }}
-            className="bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white rounded-lg h-12 min-w-[280px] px-8 text-base font-bold flex items-center justify-center gap-3 transition-all"
-          >
-            <span className="material-symbols-outlined">save</span>
-            บันทึกทั้งหมด
-          </button>
-        </div>
-      </div>
-    </div>
-    </div>
-  );
-};
-
-interface EntryBoxProps {
-  title: string;
-  subTitle: string;
-  icon: string;
-  color: string;
-  btnText: string;
-  categories: string[];
-  formData: any;
-  setFormData: any;
-  onSave: () => void;
-}
-
-const EntryBox: React.FC<EntryBoxProps> = ({ title, subTitle, icon, color, btnText, categories, formData, setFormData, onSave }) => {
-  const colorStyles: any = {
-    green: 'text-emerald-600 dark:text-emerald-500',
-    red: 'text-red-600 dark:text-red-500',
-    blue: 'text-blue-600 dark:text-blue-500'
-  };
-
-  const buttonStyles: any = {
-    green: 'border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10',
-    red: 'border-red-600 dark:border-red-500 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10',
-    blue: 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10'
-  };
-
-  return (
-    <div className="group bg-white dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-800 p-6 flex flex-col gap-6 transition-all">
-      <div className="flex items-center gap-3 border-b border-gray-200 dark:border-neutral-800 pb-4">
-        <div className={`p-2 rounded-lg text-gray-300 dark:text-neutral-700 ${colorStyles[color]}`}>
-          <span className="material-symbols-outlined">{icon}</span>
-        </div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {title} <span className="text-sm font-medium text-gray-500 dark:text-neutral-500 ml-1">{subTitle}</span>
-        </h3>
-      </div>
-      
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">จำนวนเงิน (Amount)</label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-neutral-500 font-medium">฿</span>
-            <input 
-              className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white pl-8 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 h-10 placeholder-gray-400 dark:placeholder-neutral-600" 
-              placeholder="0.00" 
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-            />
+    <div className="w-full min-h-screen bg-white dark:bg-black">
+      <div className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">บันทึกข้อมูลการเงิน</h1>
+            <p className="text-gray-600 dark:text-neutral-400 text-sm">บันทึกทีละรายการให้เร็วขึ้น พร้อมใช้วิเคราะห์ใน Dashboard และ AI</p>
           </div>
-        </div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">หมวดหมู่ (Category)</label>
-          <select 
-            className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white h-10 px-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          >
-            <option value="" disabled className="bg-white dark:bg-neutral-900">เลือกหมวดหมู่</option>
-            {categories.map(c => <option key={c} value={c} className="bg-white dark:bg-neutral-900">{c}</option>)}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">วันที่ (Date)</label>
-          <input 
-            className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white h-10 px-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">บันทึกช่วยจำ (Note)</label>
-          <textarea 
-            className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white p-3 resize-none h-20 placeholder-gray-400 dark:placeholder-neutral-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
-            placeholder="รายละเอียดเพิ่มเติม..."
-            value={formData.note}
-            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-          ></textarea>
+
+          <div className="grid grid-cols-3 gap-2 rounded-xl border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900 p-1.5">
+            {(Object.keys(TYPE_META) as TransactionType[]).map((type) => {
+              const active = form.type === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleTypeChange(type)}
+                  className={`h-11 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                    active
+                      ? 'bg-white dark:bg-neutral-800 text-gray-900 dark:text-white border border-gray-200 dark:border-neutral-700'
+                      : 'text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">{TYPE_META[type].icon}</span>
+                  {TYPE_META[type].title}
+                </button>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 sm:p-6 flex flex-col gap-5 shadow-sm">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{typeMeta.title}</h2>
+              <p className="text-sm text-gray-500 dark:text-neutral-400">{typeMeta.desc}</p>
+            </div>
+
+            {feedback && (
+              <div
+                className={`rounded-lg border px-3.5 py-2.5 text-sm ${
+                  feedback.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300'
+                    : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/40 dark:border-red-900 dark:text-red-300'
+                }`}
+              >
+                {feedback.message}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">จำนวนเงิน</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-neutral-500 font-medium">฿</span>
+                <input
+                  className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white pl-8 pr-3 h-11 placeholder-gray-400 dark:placeholder-neutral-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="0.00"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={form.amount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {QUICK_AMOUNTS.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, amount: String(amount) }))}
+                    className="h-8 rounded-full border border-gray-300 dark:border-neutral-700 px-3 text-xs font-medium text-gray-600 dark:text-neutral-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                  >
+                    ฿{amount.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">หมวดหมู่</label>
+                <select
+                  className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white h-11 px-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  value={form.category}
+                  onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+                >
+                  <option value="" disabled>เลือกหมวดหมู่</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">วันที่</label>
+                <input
+                  className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white h-11 px-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">บันทึกช่วยจำ (ไม่บังคับ)</label>
+              <textarea
+                className="block w-full rounded-lg border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white p-3 resize-none h-24 placeholder-gray-400 dark:placeholder-neutral-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                placeholder="รายละเอียดเพิ่มเติม..."
+                value={form.note}
+                maxLength={500}
+                onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500 dark:text-neutral-500 text-right">{form.note.length}/500</p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="h-12 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">save</span>
+              {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกรายการ'}
+            </button>
+          </form>
         </div>
       </div>
-      
-      <button 
-        onClick={onSave}
-        className={`mt-auto flex items-center justify-center w-full py-2.5 px-4 rounded-lg border border-dashed text-sm font-semibold transition-all gap-2 ${buttonStyles[color]}`}
-      >
-        <span className="material-symbols-outlined text-[18px]">add_circle</span>
-        {btnText}
-      </button>
     </div>
   );
 };

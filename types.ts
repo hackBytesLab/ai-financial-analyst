@@ -18,6 +18,21 @@ export interface TransactionInput {
   note: string;
 }
 
+export interface TransactionFormState {
+  type: TransactionType;
+  amount: string;
+  category: string;
+  date: string;
+  note: string;
+}
+
+export type UiFeedbackType = 'success' | 'error' | 'info';
+
+export interface UiFeedback {
+  type: UiFeedbackType;
+  message: string;
+}
+
 export interface User {
   id: string;
   email: string;

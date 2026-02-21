@@ -19,15 +19,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
     setError('');
 
     if (!email) {
-      setError('Please enter your email');
+      setError('กรุณากรอกอีเมล');
       return;
     }
     if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError('รหัสผ่านทั้งสองช่องไม่ตรงกัน');
       return;
     }
 
@@ -37,7 +37,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
       onRegister();
     } catch (err) {
       const message = normalizeAuthError(err);
-      if (message === 'Email not confirmed') {
+      if (message.includes('ยืนยันอีเมล')) {
         setError('สมัครสำเร็จแล้ว แต่ยังต้องยืนยันอีเมลก่อนเข้าสู่ระบบ');
       } else {
         setError(message);
@@ -113,11 +113,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
           <button
             type="submit"
             disabled={isLoading}
+            aria-busy={isLoading}
             className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-colors text-white text-base font-bold mt-2 disabled:opacity-60"
           >
-            {isLoading ? 'Creating...' : 'Create account'}
+            {isLoading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชี'}
           </button>
         </form>
+        <div className="text-xs leading-relaxed text-gray-500 dark:text-neutral-400 rounded-lg bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-800 p-3">
+          บางเว็บไซต์เปิดโหมดยืนยันอีเมล หากสมัครสำเร็จแต่ยังเข้าไม่ได้ ให้ตรวจกล่องจดหมายและกดยืนยันอีเมลก่อน
+        </div>
 
         <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-gray-200 dark:border-neutral-800">
           <button

@@ -17,13 +17,22 @@ function parseBody(body) {
   }
 }
 
+function isValidDateString(value) {
+  if (typeof value !== 'string') return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.toISOString().slice(0, 10) === value;
+}
+
 function validatePayload(payload) {
   const validType = payload?.type === 'income' || payload?.type === 'expense' || payload?.type === 'invest';
   if (!validType) return 'Invalid type';
   if (typeof payload?.amount !== 'number' || !Number.isFinite(payload.amount) || payload.amount <= 0) return 'Invalid amount';
   if (typeof payload?.category !== 'string' || payload.category.trim().length === 0) return 'Invalid category';
-  if (typeof payload?.date !== 'string' || payload.date.trim().length === 0) return 'Invalid date';
+  if (!isValidDateString(payload?.date)) return 'Invalid date';
   if (payload?.note != null && typeof payload.note !== 'string') return 'Invalid note';
+  if (typeof payload?.note === 'string' && payload.note.trim().length > 500) return 'Invalid note';
   return null;
 }
 
@@ -59,9 +68,9 @@ export const handler = async (event, context) => {
         id: crypto.randomUUID(),
         type: payload.type,
         amount: payload.amount,
-        category: payload.category,
+        category: payload.category.trim(),
         date: payload.date,
-        note: payload.note || '',
+        note: typeof payload.note === 'string' ? payload.note.trim() : '',
       };
 
       await createTransactionForUser(authed.userId, transaction);

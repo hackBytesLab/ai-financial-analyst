@@ -19,12 +19,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
     setError('');
 
     if (!email) {
-      setError('Please enter your email');
+      setError('กรุณากรอกอีเมล');
       return;
     }
 
     if (!password) {
-      setError('Please enter your password');
+      setError('กรุณากรอกรหัสผ่าน');
       return;
     }
 
@@ -93,31 +93,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
           <button 
             type="submit"
             disabled={isLoading}
+            aria-busy={isLoading}
             className="flex w-full items-center justify-center rounded-lg h-12 px-5 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-colors text-white text-base font-bold mt-2 disabled:opacity-60">
-            {isLoading ? 'Signing in...' : 'Log in'}
+            {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
-        <div className="relative flex items-center py-1">
-          <div className="flex-grow border-t border-gray-300 dark:border-neutral-700"></div>
-          <span className="flex-shrink-0 mx-4 text-xs font-medium text-gray-500 dark:text-neutral-500 uppercase">Or continue with</span>
-          <div className="flex-grow border-t border-gray-300 dark:border-neutral-700"></div>
-        </div>
-        <div className="flex flex-col gap-3 w-full">
-          <button className="flex w-full items-center justify-center gap-3 rounded-lg h-12 px-4 border border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 bg-white dark:bg-transparent transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4"></path>
-              <path d="M12.24 24.0008C15.4765 24.0008 18.2058 22.9382 20.1945 21.1039L16.3275 18.1055C15.2517 18.8375 13.8627 19.252 12.2445 19.252C9.11388 19.252 6.45946 17.1399 5.50705 14.3003H1.5166V17.3912C3.55371 21.4434 7.7029 24.0008 12.24 24.0008Z" fill="#34A853"></path>
-              <path d="M5.50253 14.3003C5.00309 12.8099 5.00309 11.1961 5.50253 9.70575V6.61481H1.5166C-0.18551 10.0056 -0.18551 14.0004 1.5166 17.3912L5.50253 14.3003Z" fill="#FBBC05"></path>
-              <path d="M12.24 4.74966C13.9509 4.7232 15.6044 5.36697 16.8434 6.54867L20.2695 3.12262C18.1001 1.0855 15.2208 -0.034466 12.24 0.000808666C7.7029 0.000808666 3.55371 2.55822 1.5166 6.61481L5.50253 9.70575C6.45064 6.86173 9.10947 4.74966 12.24 4.74966Z" fill="#EA4335"></path>
-            </svg>
-            <span className="text-sm font-semibold text-gray-700 dark:text-neutral-300">Log in with Google</span>
-          </button>
+        <div className="text-xs leading-relaxed text-gray-500 dark:text-neutral-400 rounded-lg bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-800 p-3">
+          ระบบนี้ใช้ Netlify Identity: ถ้าสมัครใหม่และระบบบังคับยืนยันอีเมล กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ
         </div>
         <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-gray-200 dark:border-neutral-800">
-          <a className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" href="#">ลืมรหัสผ่าน?</a>
           <button
             onClick={onSwitchToRegister}
-            className="text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+            className="ml-auto text-sm font-bold text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
           >
             ไม่มีบัญชี? ลงทะเบียน
           </button>

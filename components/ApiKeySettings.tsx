@@ -5,6 +5,7 @@ const ApiKeySettings: React.FC = () => {
   const [value, setValue] = useState('');
   const [status, setStatus] = useState<'set' | 'empty'>('empty');
   const [error, setError] = useState('');
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     const stored = getGeminiKey();
@@ -17,11 +18,20 @@ const ApiKeySettings: React.FC = () => {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!value.trim()) {
+    const key = value.trim();
+    if (!key) {
       setError('กรุณากรอก Gemini API Key ก่อนบันทึก');
       return;
     }
-    setGeminiKey(value);
+    if (key.length < 20) {
+      setError('รูปแบบ API Key สั้นเกินไป');
+      return;
+    }
+    if (!key.startsWith('AIza')) {
+      setError('รูปแบบ API Key ไม่ถูกต้อง (ควรขึ้นต้นด้วย AIza)');
+      return;
+    }
+    setGeminiKey(key);
     setStatus('set');
   };
 
@@ -62,13 +72,22 @@ const ApiKeySettings: React.FC = () => {
           <form className="flex flex-col gap-4" onSubmit={handleSave}>
             <div className="flex flex-col gap-1.5">
               <label className="text-gray-900 dark:text-white text-sm font-bold leading-normal">Gemini API Key</label>
-              <input
-                className="w-full rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 h-12 px-4 placeholder-gray-500 dark:placeholder-neutral-600"
-                placeholder="paste your API key here"
-                type="password"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  className="w-full rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 h-12 px-4 pr-24 placeholder-gray-500 dark:placeholder-neutral-600"
+                  placeholder="paste your API key here"
+                  type={showKey ? 'text' : 'password'}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 rounded-md px-3 text-xs font-semibold border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                >
+                  {showKey ? 'ซ่อน' : 'แสดง'}
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
@@ -88,7 +107,7 @@ const ApiKeySettings: React.FC = () => {
           </form>
 
           <div className="text-xs text-gray-500 dark:text-neutral-400">
-            เหตุผลด้านความปลอดภัย: เว็บนี้ถูก deploy แบบ public จึงไม่สามารถฝัง API key ของเจ้าของโปรเจกต์ไว้ในโค้ดได้
+            เหตุผลด้านความปลอดภัย: เว็บนี้ deploy แบบ public จึงไม่ฝังคีย์ส่วนกลางในโค้ด และจะเก็บคีย์ไว้เฉพาะเบราว์เซอร์ของคุณ
           </div>
         </div>
       </div>

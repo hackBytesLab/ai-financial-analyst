@@ -28,7 +28,7 @@ function debugLog(message: string, payload?: unknown) {
 }
 
 export function normalizeAuthError(error: unknown): string {
-  const fallback = 'Auth request failed';
+  const fallback = 'การยืนยันตัวตนล้มเหลว';
   if (!error) return fallback;
 
   const anyError = error as {
@@ -49,19 +49,26 @@ export function normalizeAuthError(error: unknown): string {
   const status = anyError?.status;
 
   if (status === 404 || lower.includes('identity is not ready') || lower.includes('identity not enabled') || lower.includes('not found') || lower.includes('404')) {
-    return 'Identity not enabled';
+    return 'ระบบล็อกอินยังไม่พร้อมใช้งาน (Identity not enabled)';
   }
   if (lower.includes('email') && lower.includes('confirm')) {
-    return 'Email not confirmed';
+    return 'ยังไม่ได้ยืนยันอีเมล';
   }
   if (lower.includes('invalid') && (lower.includes('credential') || lower.includes('password') || lower.includes('login'))) {
-    return 'Invalid login credentials';
+    return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
   }
   if (lower.includes('unauthorized') || lower.includes('401')) {
-    return 'Invalid login credentials';
+    return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  }
+  if (lower.includes('networkerror') || lower.includes('failed to fetch')) {
+    return 'ไม่สามารถเชื่อมต่อเครือข่ายได้';
   }
 
-  return message || fallback;
+  if (message && message !== fallback) {
+    return isDev ? `การยืนยันตัวตนล้มเหลว: ${message}` : fallback;
+  }
+
+  return fallback;
 }
 
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
