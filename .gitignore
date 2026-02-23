@@ -36,3 +36,7 @@ __pycache__
 *.py[cod]
 *.pyo
 .Python
+
+# Playwright
+playwright-report
+test-results
