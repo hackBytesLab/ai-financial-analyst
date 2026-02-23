@@ -43,11 +43,19 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
       }
       onRegister();
     } catch (err) {
-      const message = normalizeAuthError(err);
-      if (message.includes('ยืนยันอีเมล')) {
-        setError('สมัครสำเร็จแล้ว แต่ยังต้องยืนยันอีเมลก่อนเข้าสู่ระบบ');
+      if (err instanceof Error && err.message) {
+        if (err.message.includes('ยืนยันอีเมล')) {
+          setError('สมัครสำเร็จแล้ว แต่ยังต้องยืนยันอีเมลก่อนเข้าสู่ระบบ');
+        } else {
+          setError(err.message);
+        }
       } else {
-        setError(message);
+        const message = normalizeAuthError(err);
+        if (message.includes('ยืนยันอีเมล')) {
+          setError('สมัครสำเร็จแล้ว แต่ยังต้องยืนยันอีเมลก่อนเข้าสู่ระบบ');
+        } else {
+          setError(message);
+        }
       }
     } finally {
       setIsLoading(false);

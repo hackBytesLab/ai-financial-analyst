@@ -229,7 +229,7 @@ export const identity = {
       notifyAuthChanged();
       return user;
     } catch (error) {
-      if (isLocalDevRuntime() && isIdentityTemporarilyUnavailable(error)) {
+      if (isLocalDevRuntime() && (isIdentityTemporarilyUnavailable(error) || isIdentityEndpointError(error))) {
         return activateLocalDevUser(email);
       }
       // Signup may succeed while login requires email confirmation.
