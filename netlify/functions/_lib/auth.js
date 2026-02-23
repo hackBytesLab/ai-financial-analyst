@@ -5,11 +5,10 @@ function readBearerToken(event) {
   return match?.[1] || '';
 }
 
-function getSiteBaseUrl(event) {
+function getSiteBaseUrl() {
   if (process.env.URL) return process.env.URL;
   if (process.env.DEPLOY_PRIME_URL) return process.env.DEPLOY_PRIME_URL;
-  const host = event?.headers?.host;
-  return host ? `https://${host}` : '';
+  return '';
 }
 
 export async function getAuthedUser(event, context) {
@@ -26,7 +25,7 @@ export async function getAuthedUser(event, context) {
     return null;
   }
 
-  const baseUrl = getSiteBaseUrl(event);
+  const baseUrl = getSiteBaseUrl();
   if (!baseUrl) {
     return null;
   }

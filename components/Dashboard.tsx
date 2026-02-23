@@ -15,6 +15,29 @@ function toMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function parseCalendarDateParts(value: string): { year: number; month: number; day: number } | null {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function toMonthKeyFromParts(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
 function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split('-').map(Number);
   const date = new Date(year, month - 1, 1);
@@ -33,7 +56,6 @@ function lastNMonthKeys(n: number): string[] {
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   const [aiInsight, setAiInsight] = useState<string>('กำลังประมวลผลคำแนะนำจาก AI...');
-  const [isKeyMissing, setIsKeyMissing] = useState(false);
 
   const hasData = transactions.length > 0;
 
@@ -64,9 +86,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     keys.forEach((key) => bucket.set(key, { income: 0, expenses: 0 }));
 
     transactions.forEach((t) => {
-      const date = new Date(t.date);
-      if (Number.isNaN(date.getTime())) return;
-      const key = toMonthKey(date);
+      const dateParts = parseCalendarDateParts(t.date);
+      if (!dateParts) return;
+      const key = toMonthKeyFromParts(dateParts.year, dateParts.month);
       const target = bucket.get(key);
       if (!target) return;
       if (t.type === 'income') target.income += t.amount;
@@ -106,7 +128,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
   useEffect(() => {
     if (!hasData) {
       setAiInsight('เริ่มบันทึกรายรับและรายจ่ายเพื่อรับคำแนะนำจาก AI ได้ทันที');
-      setIsKeyMissing(false);
       return;
     }
 
@@ -114,14 +135,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       const summary = `Income: ฿${stats.income}, Expenses: ฿${stats.expenses}, Net: ฿${stats.net}, Savings: ${stats.savingsRate}%`;
       try {
         const result = await getFinancialInsight(summary);
-        setIsKeyMissing(false);
         setAiInsight(result || 'พร้อมให้คำปรึกษาทางการเงินกับคุณเสมอ');
       } catch (error) {
-        if (error instanceof Error && error.message.includes('GEMINI_API_KEY_MISSING')) {
-          setIsKeyMissing(true);
-          setAiInsight('กรุณาตั้งค่า Gemini API Key เพื่อใช้คำแนะนำจาก AI');
-          return;
-        }
+        console.error('Insight request failed', error);
         setAiInsight('พร้อมให้คำปรึกษาทางการเงินกับคุณเสมอ');
       }
     };
@@ -142,9 +158,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     };
 
     transactions.forEach((t) => {
-      const d = new Date(t.date);
-      if (Number.isNaN(d.getTime())) return;
-      const key = toMonthKey(d);
+      const dateParts = parseCalendarDateParts(t.date);
+      if (!dateParts) return;
+      const key = toMonthKeyFromParts(dateParts.year, dateParts.month);
       if (key === currentKey && t.type === 'income') values.currentIncome += t.amount;
       if (key === currentKey && t.type === 'expense') values.currentExpense += t.amount;
       if (key === lastKey && t.type === 'income') values.lastIncome += t.amount;
@@ -270,13 +286,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                     <span className="font-semibold text-emerald-700 dark:text-emerald-400">AI Analyst:</span> {aiInsight}
                   </p>
                 </div>
-                {isKeyMissing && (
-                  <div className="mt-1">
-                    <Link to="/settings" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
-                      ไปที่หน้าตั้งค่า API Key
-                    </Link>
-                  </div>
-                )}
               </div>
             </div>
             <Link to="/analysis" className="group flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all w-full md:w-auto">
@@ -330,3 +339,4 @@ const StatCard: React.FC<{ title: string; value: string; change: MonthlyChange; 
 );
 
 export default Dashboard;
+

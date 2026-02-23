@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { chatWithAI } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
@@ -45,11 +44,8 @@ const Chat: React.FC = () => {
       const response = await chatWithAI(userMessage.text, history);
       setMessages((prev) => [...prev, { role: 'model', text: response || 'No response', timestamp: new Date() }]);
     } catch (error) {
-      if (error instanceof Error && error.message.includes('GEMINI_API_KEY_MISSING')) {
-        setApiError('กรุณาตั้งค่า Gemini API Key ก่อนใช้งาน AI Chat');
-      } else {
-        setApiError('ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้');
-      }
+      console.error('Chat request failed', error);
+      setApiError('ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้');
     } finally {
       setIsLoading(false);
     }
@@ -63,13 +59,7 @@ const Chat: React.FC = () => {
         <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-6 pb-4">
           {apiError && (
             <div className="rounded-lg border border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950 p-4 text-sm text-yellow-800 dark:text-yellow-200">
-              <div className="font-semibold mb-1">ต้องตั้งค่า API Key</div>
-              <div className="flex items-center gap-2">
-                <span>{apiError}</span>
-                <Link to="/settings" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
-                  ไปตั้งค่า
-                </Link>
-              </div>
+              <span>{apiError}</span>
             </div>
           )}
 

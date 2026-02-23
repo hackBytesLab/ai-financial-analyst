@@ -1,28 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
 import type { ChatHistoryTurn } from "../types";
-import { getGeminiKey } from "./apiKeyStore";
+import { identity } from "./identity";
 
-const MISSING_KEY_ERROR = "GEMINI_API_KEY_MISSING";
+const siteBase = import.meta.env.VITE_NETLIFY_SITE_URL || window.location.origin;
+const functionsBase = `${siteBase}/.netlify/functions`;
 
-function getClient() {
-  const apiKey = getGeminiKey();
-  if (!apiKey || apiKey === "PLACEHOLDER_API_KEY") {
-    throw new Error(MISSING_KEY_ERROR);
-  }
-  return new GoogleGenAI({ apiKey });
-}
-
-const FALLBACK_INSIGHT =
-  "AI Insight: ลองตรวจสอบค่าใช้จ่ายในหมวดอาหารที่ดูเหมือนจะสูงขึ้นในสัปดาห์นี้";
-const FALLBACK_CHAT = "ขออภัยครับ เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI โปรดลองอีกครั้งภายหลัง";
-const FALLBACK_ANALYSIS = `📊 สรุปสุขภาพทางการเงิน
-
-จากข้อมูลที่มี คุณมีการจัดการรายรับ-รายจ่ายในระดับที่พอใช้ได้ แต่ยังมีจุดที่สามารถปรับปรุงได้
-
-💡 คำแนะนำ:
-• พยายามเพิ่มอัตราการออมให้ถึง 20% ของรายรับ
-• ติดตามค่าใช้จ่ายหมวดที่สูงที่สุดอย่างสม่ำเสมอ
-• บันทึกรายรับ-รายจ่ายทุกวันเพื่อข้อมูลที่แม่นยำขึ้น`;
+const FALLBACK_INSIGHT = "AI Insight: Review your food spending this week and set a tighter daily cap.";
+const FALLBACK_CHAT = "Sorry, AI is temporarily unavailable. Please try again in a moment.";
+const FALLBACK_ANALYSIS = `Financial summary\n\nYour spending and income tracking is working, but there is room to improve.\n\nSuggestions:\n- Target a 20% savings rate\n- Monitor your highest spending category weekly\n- Log transactions daily for better accuracy`;
 
 function normalizeApiText(value: unknown): string | null {
   if (value == null) return null;
@@ -30,60 +14,54 @@ function normalizeApiText(value: unknown): string | null {
   return s.trim() || null;
 }
 
+async function requestAI<T>(body: unknown): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  const token = await identity.getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${functionsBase}/ai`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new Error(payload?.error || `AI request failed: ${res.status}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
 export const getFinancialInsight = async (summary: string): Promise<string> => {
   try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Based on this financial summary: "${summary}", provide a single, short, actionable advice for a student in Thai language. Start with "AI Insight: ".`,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 150,
-      },
+    const response = await requestAI<{ text?: string }>({
+      action: "insight",
+      summary,
     });
     const text = normalizeApiText(response?.text);
     return text ?? FALLBACK_INSIGHT;
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
-      console.error("Gemini Error:", error.message);
-    } else {
-      console.error("Gemini Error:", error);
-    }
+    console.error("Gemini Error:", error);
     return FALLBACK_INSIGHT;
   }
 };
 
 export const getFinancialAnalysis = async (detailsJson: string): Promise<string> => {
   try {
-    const ai = getClient();
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `คุณเป็น AI Financial Analyst สำหรับนักศึกษา จงวิเคราะห์ข้อมูลการเงินต่อไปนี้อย่างละเอียด:
-
-${detailsJson}
-
-กรุณาตอบเป็นภาษาไทย โดยครอบคลุมหัวข้อเหล่านี้:
-1. 📊 สรุปภาพรวมสุขภาพทางการเงิน (1-2 ประโยค)
-2. ✅ จุดแข็ง — สิ่งที่ทำได้ดี (1-2 ข้อ)
-3. ⚠️ จุดที่ควรปรับปรุง (1-2 ข้อ)
-4. 💡 คำแนะนำเชิงปฏิบัติ (2-3 ข้อสั้นๆ ที่นักศึกษาทำได้จริง)
-
-ตอบให้กระชับ ไม่เกิน 200 คำ ใช้โทนที่เป็นมิตรและให้กำลังใจ`,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 500,
-      },
+    const response = await requestAI<{ text?: string }>({
+      action: "analysis",
+      detailsJson,
     });
     const text = normalizeApiText(response?.text);
     return text ?? FALLBACK_ANALYSIS;
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
-      console.error("Analysis Error:", error.message);
-    } else {
-      console.error("Analysis Error:", error);
-    }
+    console.error("Analysis Error:", error);
     return FALLBACK_ANALYSIS;
   }
 };
@@ -95,27 +73,15 @@ export const chatWithAI = async (
   history: ChatHistoryTurn[]
 ): Promise<string> => {
   try {
-    const ai = getClient();
-    const chat = ai.chats.create({
-      model: "gemini-3-flash-preview",
-      history: history.length > 0 ? history : undefined,
-      config: {
-        systemInstruction:
-          "You are a helpful AI Financial Analyst specialized in helping students manage their money. You speak Thai primarily. Be encouraging, precise, and professional. Keep your responses short and concise — ideally 2-3 sentences. Avoid long paragraphs or bullet points unless the user explicitly asks for detailed explanation.",
-        maxOutputTokens: 200,
-      },
+    const response = await requestAI<{ text?: string }>({
+      action: "chat",
+      message,
+      history,
     });
-
-    const response = await chat.sendMessage({ message });
     const text = normalizeApiText(response?.text);
     return text ?? FALLBACK_CHAT;
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes(MISSING_KEY_ERROR)) throw error;
-      console.error("Chat Error:", error.message);
-    } else {
-      console.error("Chat Error:", error);
-    }
+    console.error("Chat Error:", error);
     return FALLBACK_CHAT;
   }
 };

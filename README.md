@@ -103,3 +103,31 @@ Transaction shape:
 ```bash
 npm run legacy:share
 ```
+
+## AI Key Security
+
+Set Gemini key only on server-side environment variables:
+
+```env
+GEMINI_API_KEY=""
+GEMINI_MODEL="gemini-2.0-flash"
+```
+
+- Never put `GEMINI_API_KEY` in frontend code.
+- Never expose secrets through `VITE_*` variables.
+- AI requests now run via `POST /.netlify/functions/ai`.
+
+## Legacy Server Migration Notes
+
+Legacy mode remains optional and is kept for compatibility.
+
+When running `server/` mode, apply all Prisma migrations before starting the API:
+
+```bash
+cd server
+npm install
+npx prisma migrate deploy
+npm run dev
+```
+
+The latest migration adds `User.role` and `User.lastLogin` so admin/user queries stay consistent with `server/prisma/schema.prisma`.

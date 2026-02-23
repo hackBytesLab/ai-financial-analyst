@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Link, Routes, Route } from 'react-router-dom';
+import { HashRouter, Link, Navigate, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import DataEntry from './components/DataEntry';
 import Chat from './components/Chat';
@@ -7,7 +7,6 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Header from './components/Header';
 import Analysis from './Analysis';
-import ApiKeySettings from './components/ApiKeySettings';
 import { Transaction, TransactionInput, Theme, User } from './types';
 import { api } from './services/api';
 
@@ -150,11 +149,7 @@ const App: React.FC = () => {
             <Route path="/entry" element={<DataEntry onAdd={addTransaction} />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/analysis" element={<Analysis transactions={transactions} />} />
-            <Route path="/settings" element={<ApiKeySettings />} />
-            <Route
-              path="/admin"
-              element={<ComingSoon title="Admin Module ถูกปิดชั่วคราว" description="โหมด Netlify-only ยังไม่เปิดใช้งานหน้าจัดการผู้ใช้ในเวอร์ชันนี้" />}
-            />
+            <Route path="/admin" element={<Navigate to="/" replace />} />
             <Route
               path="/reports"
               element={<ComingSoon title="Reports กำลังพัฒนา" description="ตอนนี้สามารถดูภาพรวมผ่าน Dashboard และ Analysis ได้ก่อน" />}
@@ -167,3 +162,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+

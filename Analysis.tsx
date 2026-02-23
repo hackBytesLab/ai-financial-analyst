@@ -21,7 +21,6 @@ interface HealthMetric {
 const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('กำลังวิเคราะห์ข้อมูลการเงินของคุณ...');
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [isKeyMissing, setIsKeyMissing] = useState(false);
 
   const hasData = transactions.length > 0;
 
@@ -120,7 +119,6 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
     if (!hasData) {
       setAiAnalysis('ยังไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์เชิงลึก เริ่มบันทึกรายรับรายจ่ายก่อน');
       setIsLoadingAI(false);
-      setIsKeyMissing(false);
       return;
     }
 
@@ -140,15 +138,10 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
       };
       try {
         const result = await getFinancialAnalysis(JSON.stringify(details));
-        setIsKeyMissing(false);
         setAiAnalysis(result);
       } catch (error) {
-        if (error instanceof Error && error.message.includes('GEMINI_API_KEY_MISSING')) {
-          setIsKeyMissing(true);
-          setAiAnalysis('กรุณาตั้งค่า Gemini API Key เพื่อใช้งานการวิเคราะห์เชิงลึก');
-        } else {
-          setAiAnalysis('ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้');
-        }
+        console.error('Analysis request failed', error);
+        setAiAnalysis('AI is temporarily unavailable right now.');
       } finally {
         setIsLoadingAI(false);
       }
@@ -181,9 +174,6 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link to="/entry" className="inline-flex h-10 items-center rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-5 text-sm font-bold">
                 เพิ่มข้อมูลการเงิน
-              </Link>
-              <Link to="/settings" className="inline-flex h-10 items-center rounded-lg border border-gray-300 dark:border-neutral-700 px-5 text-sm font-bold text-gray-700 dark:text-neutral-300">
-                ตั้งค่า API Key
               </Link>
             </div>
           </div>
@@ -323,13 +313,6 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions }) => {
                     {aiAnalysis}
                   </div>
                 </div>
-                {isKeyMissing && (
-                  <div className="mt-3">
-                    <Link to="/settings" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
-                      ไปที่หน้าตั้งค่า API Key
-                    </Link>
-                  </div>
-                )}
               </div>
             )}
 
@@ -373,3 +356,4 @@ const MiniStat: React.FC<{ label: string; value: string; icon: string; color: st
 };
 
 export default Analysis;
+

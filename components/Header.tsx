@@ -21,7 +21,6 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEma
     ...(userRole === 'ADMIN' ? [{ name: 'Users', path: '/admin' }] : []),
     { name: 'รายงาน', path: '/reports' },
     { name: 'AI Chat', path: '/chat', icon: 'chat_bubble' },
-    { name: 'API Key', path: '/settings', icon: 'key' },
   ];
 
   const mobileTabs = [
@@ -29,7 +28,6 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEma
     { name: 'บันทึก', path: '/entry', icon: 'edit_square' },
     { name: 'วิเคราะห์', path: '/analysis', icon: 'monitoring' },
     { name: 'แชต', path: '/chat', icon: 'chat' },
-    { name: 'ตั้งค่า', path: '/settings', icon: 'settings' },
   ];
 
   const initials = userEmail
@@ -94,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEma
       </header>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-sm">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-4">
           {mobileTabs.map((tab) => {
             const isActive = location.pathname === tab.path;
             return (
@@ -119,3 +117,4 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onLogout, userEma
 };
 
 export default Header;
+

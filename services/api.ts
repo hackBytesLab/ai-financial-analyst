@@ -131,15 +131,11 @@ export const api = {
   },
 
   logout: async (): Promise<void> => {
-    identity.logout();
+    await identity.logout();
     await request<{ ok: true }>('/logout', { method: 'POST', auth: false }).catch(() => ({ ok: true }));
   },
 
   me: (): Promise<{ user: User }> => request('/me'),
-
-  adminListUsers: async (): Promise<{ users: Array<{ id: string; email: string; createdAt: string; lastLogin?: string | null; role?: string }> }> => {
-    throw new Error('Admin module disabled in Netlify-only mode');
-  },
 
   listTransactions: (): Promise<{ transactions: Transaction[] }> => request('/transactions'),
 
