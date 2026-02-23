@@ -25,7 +25,6 @@ npm install
 ```bash
 cp .env.example .env
 ```
-
 ค่าที่รองรับ:
 
 ```env
