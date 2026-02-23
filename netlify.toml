@@ -2,6 +2,13 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+  ignore = "if [ \"$CONTEXT\" = \"branch-deploy\" ]; then echo 'Skip branch deploy'; exit 0; else exit 1; fi"
+
+[context.deploy-preview]
+  command = "npm run build"
+
+[context.production]
+  command = "npm run build"
 
 [dev]
   targetPort = 3000
