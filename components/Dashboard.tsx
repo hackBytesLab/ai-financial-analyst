@@ -189,7 +189,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
 
   return (
     <div className="w-full min-h-screen bg-white dark:bg-black">
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 flex flex-col gap-6 lg:gap-8">
+      <div className="w-full max-w-[1440px] mx-auto py-8">
+        <div className="rounded-2xl border border-gray-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/40 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-6 lg:px-10 py-8 flex flex-col gap-6 lg:gap-8">
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="รายรับเดือนนี้" value={`฿${stats.income.toLocaleString()}`} change={monthlyComparison.incomeChange} icon="account_balance_wallet" />
           <StatCard title="รายจ่ายเดือนนี้" value={`฿${stats.expenses.toLocaleString()}`} change={monthlyComparison.expenseChange} icon="credit_card" />
@@ -198,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 p-6 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm flex flex-col">
+          <div className="lg:col-span-2 min-w-0 p-6 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
               <div>
                 <h3 className="text-gray-900 dark:text-white text-lg font-bold">Income vs Expenses</h3>
@@ -227,7 +229,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
             )}
           </div>
 
-          <div className="p-6 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm flex flex-col">
+          <div className="min-w-0 p-6 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-sm flex flex-col">
             <h3 className="text-gray-900 dark:text-white text-lg font-bold mb-1">Expense Breakdown</h3>
             <p className="text-gray-500 dark:text-neutral-400 text-sm mb-6">By Category</p>
             {expenseBreakdown.length > 0 ? (
@@ -294,6 +296,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
             </Link>
           </div>
         </section>
+          </div>
+        </div>
       </div>
     </div>
   );
