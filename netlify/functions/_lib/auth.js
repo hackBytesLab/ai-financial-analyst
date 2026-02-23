@@ -5,6 +5,34 @@ function readBearerToken(event) {
   return match?.[1] || '';
 }
 
+function isLocalDevRuntime() {
+  return process.env.NETLIFY_DEV === 'true';
+}
+
+function parseLocalDevToken(token) {
+  if (!token || !token.startsWith('dev-local.')) {
+    return null;
+  }
+
+  const encoded = token.slice('dev-local.'.length);
+  if (!encoded) return null;
+
+  try {
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const decoded = Buffer.from(padded, 'base64').toString('utf8');
+    const payload = JSON.parse(decoded);
+    if (!payload || typeof payload !== 'object') return null;
+    if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') return null;
+    return {
+      userId: payload.sub,
+      email: payload.email,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function getSiteBaseUrl() {
   if (process.env.URL) return process.env.URL;
   if (process.env.DEPLOY_PRIME_URL) return process.env.DEPLOY_PRIME_URL;
@@ -23,6 +51,13 @@ export async function getAuthedUser(event, context) {
   const token = readBearerToken(event);
   if (!token) {
     return null;
+  }
+
+  if (isLocalDevRuntime()) {
+    const localUser = parseLocalDevToken(token);
+    if (localUser) {
+      return localUser;
+    }
   }
 
   const baseUrl = getSiteBaseUrl();

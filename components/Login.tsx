@@ -33,7 +33,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
       await api.login(email, password);
       onLogin();
     } catch (err) {
-      setError(normalizeAuthError(err));
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError(normalizeAuthError(err));
+      }
     } finally {
       setIsLoading(false);
     }

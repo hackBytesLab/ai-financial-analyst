@@ -121,6 +121,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
         </form>
         <div className="text-xs leading-relaxed text-gray-500 dark:text-neutral-400 rounded-lg bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-800 p-3">
           บางเว็บไซต์เปิดโหมดยืนยันอีเมล หากสมัครสำเร็จแต่ยังเข้าไม่ได้ ให้ตรวจกล่องจดหมายและกดยืนยันอีเมลก่อน
+          <br />
+          ถ้าขึ้นว่าไม่เปิดรับสมัคร ให้ตรวจ Netlify Identity &gt; Registration ว่าเป็น Open
         </div>
 
         <div className="flex items-center justify-between w-full pt-4 mt-2 border-t border-gray-200 dark:border-neutral-800">

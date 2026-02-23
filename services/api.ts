@@ -48,8 +48,29 @@ export function normalizeAuthError(error: unknown): string {
   const lower = message.toLowerCase();
   const status = anyError?.status;
 
-  if (status === 404 || lower.includes('identity is not ready') || lower.includes('identity not enabled') || lower.includes('not found') || lower.includes('404')) {
+  const likelyIdentityEndpointIssue = lower.includes('identity is not ready')
+    || lower.includes('identity not enabled')
+    || lower.includes('/.netlify/identity')
+    || lower.includes('gotrue')
+    || (status === 404 && lower.includes('identity'));
+
+  if (likelyIdentityEndpointIssue) {
     return 'ระบบล็อกอินยังไม่พร้อมใช้งาน (Identity not enabled)';
+  }
+  if (
+    lower.includes('already') && (lower.includes('registered') || lower.includes('exists'))
+    || lower.includes('user already')
+  ) {
+    return 'อีเมลนี้ถูกใช้งานแล้ว';
+  }
+  if (lower.includes('signup') && (lower.includes('disabled') || lower.includes('not allowed'))) {
+    return 'ระบบยังไม่เปิดรับการสมัครสมาชิก';
+  }
+  if (lower.includes('password') && lower.includes('weak')) {
+    return 'รหัสผ่านไม่ปลอดภัยพอ';
+  }
+  if (lower.includes('password') && lower.includes('short')) {
+    return 'รหัสผ่านสั้นเกินไป';
   }
   if (lower.includes('email') && lower.includes('confirm')) {
     return 'ยังไม่ได้ยืนยันอีเมล';
@@ -65,7 +86,8 @@ export function normalizeAuthError(error: unknown): string {
   }
 
   if (message && message !== fallback) {
-    return isDev ? `การยืนยันตัวตนล้มเหลว: ${message}` : fallback;
+    const sanitized = message.replace(/^error:\s*/i, '').trim();
+    return `การยืนยันตัวตนล้มเหลว: ${sanitized}`;
   }
 
   return fallback;
