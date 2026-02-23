@@ -126,13 +126,13 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
 export const api = {
   onAuthChange: (callback: (user: unknown | null) => void) => identity.onChange(callback),
 
-  register: async (email: string, password: string): Promise<{ token: string }> => {
+  register: async (email: string, password: string): Promise<{ token: string; needsEmailConfirmation: boolean }> => {
     debugLog('register request start', { email });
     try {
       await identity.register(email, password);
       const token = await identity.getToken();
       debugLog('register request success', { email });
-      return { token };
+      return { token, needsEmailConfirmation: !token };
     } catch (error) {
       debugLog('register request fail', { email, error });
       throw new Error(normalizeAuthError(error));

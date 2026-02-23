@@ -11,12 +11,14 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
 
     if (!email) {
       setError('กรุณากรอกอีเมล');
@@ -33,7 +35,12 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
 
     try {
       setIsLoading(true);
-      await api.register(email, password);
+      const result = await api.register(email, password);
+      if (result.needsEmailConfirmation) {
+        setNotice('สมัครสำเร็จแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ');
+        setTimeout(() => onSwitchToLogin(), 1200);
+        return;
+      }
       onRegister();
     } catch (err) {
       const message = normalizeAuthError(err);
@@ -61,6 +68,11 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onSwitchToLogin }) => {
           {error && (
             <div className="bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-800 rounded-lg p-3 text-red-800 dark:text-red-200 text-sm">
               {error}
+            </div>
+          )}
+          {notice && (
+            <div className="bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 rounded-lg p-3 text-emerald-800 dark:text-emerald-200 text-sm">
+              {notice}
             </div>
           )}
           <div className="flex flex-col gap-1.5">

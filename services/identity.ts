@@ -175,6 +175,24 @@ function isIdentityEndpointError(error: unknown): boolean {
     || details.includes('gotrue');
 }
 
+function isEmailConfirmationRequired(error: unknown): boolean {
+  const anyError = error as { message?: string; json?: { error?: string; error_description?: string } };
+  const rawMessage = typeof error === 'string'
+    ? error
+    : error instanceof Error
+      ? error.message
+      : anyError?.message || '';
+  const details = [rawMessage, anyError?.json?.error, anyError?.json?.error_description]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return details.includes('email not confirmed')
+    || details.includes('requires confirmation')
+    || details.includes('confirm your email')
+    || details.includes('verify your email');
+}
+
 async function runWithIdentityFallback<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
@@ -197,10 +215,16 @@ export const identity = {
   register: async (email: string, password: string) => {
     debugLog('register start', { email });
     try {
-      const user = await runWithIdentityFallback(async () => {
-        await auth.signup(email, password);
-        return auth.login(email, password, true);
-      });
+      await runWithIdentityFallback(() => auth.signup(email, password));
+      let user: IdentityUser | null = null;
+      try {
+        user = await runWithIdentityFallback(() => auth.login(email, password, true));
+      } catch (loginError) {
+        if (!isEmailConfirmationRequired(loginError)) {
+          throw loginError;
+        }
+        debugLog('register pending email confirmation', { email });
+      }
       debugLog('register success', { email });
       notifyAuthChanged();
       return user;
