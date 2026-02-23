@@ -10,7 +10,7 @@ const EMPTY_FORM = (): TransactionFormState => ({
   type: 'income',
   amount: '',
   category: '',
-  date: new Date().toISOString().split('T')[0],
+  date: getTodayLocalDateString(),
   note: '',
 });
 
@@ -22,11 +22,49 @@ const TYPE_META: Record<TransactionType, { title: string; desc: string; color: s
   invest: { title: 'การลงทุน', desc: 'บันทึกเงินที่นำไปลงทุน', color: 'blue', icon: 'monitoring' },
 };
 
+function getTodayLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeDateString(value: string): string | null {
+  const raw = value.trim();
+  if (!raw) return null;
+
+  let year = 0;
+  let month = 0;
+  let day = 0;
+
+  const ymd = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (ymd) {
+    year = Number(ymd[1]);
+    month = Number(ymd[2]);
+    day = Number(ymd[3]);
+  } else {
+    const dmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (!dmy) return null;
+    day = Number(dmy[1]);
+    month = Number(dmy[2]);
+    year = Number(dmy[3]);
+  }
+
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function isValidDateString(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.toISOString().slice(0, 10) === value;
+  return normalizeDateString(value) !== null;
 }
 
 const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
@@ -73,7 +111,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd }) => {
         type: form.type,
         amount: Number(form.amount),
         category: form.category.trim(),
-        date: form.date,
+        date: normalizeDateString(form.date) || form.date,
         note: form.note.trim(),
       });
 
