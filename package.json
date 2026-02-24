@@ -12,6 +12,10 @@
     "typecheck": "npm run typecheck:web",
     "typecheck:web": "tsc --noEmit -p tsconfig.json",
     "typecheck:server": "npm --prefix server run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
@@ -31,10 +35,13 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "eslint": "^10.0.1",
+    "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.3.0",
     "prettier": "^3.8.1",
     "typescript": "~5.8.2",
+    "typescript-eslint": "^8.56.1",
     "vite": "^6.2.0"
   }
 }

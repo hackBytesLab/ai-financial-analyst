@@ -1,0 +1,6 @@
+dist
+server/dist
+node_modules
+.netlify
+playwright-report
+test-results
